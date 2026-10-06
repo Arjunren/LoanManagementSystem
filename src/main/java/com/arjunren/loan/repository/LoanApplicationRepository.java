@@ -1,0 +1,4 @@
+package com.arjunren.loan.repository;
+import com.arjunren.loan.domain.LoanStatus; import com.arjunren.loan.entity.LoanApplication; import jakarta.persistence.LockModeType; import java.util.Optional; import org.springframework.data.domain.*; import org.springframework.data.jpa.repository.*; import org.springframework.data.repository.query.Param;
+public interface LoanApplicationRepository extends JpaRepository<LoanApplication,Long>{Page<LoanApplication> findByCustomerId(Long customerId,Pageable pageable);Page<LoanApplication> findByStatus(LoanStatus status,Pageable pageable);Page<LoanApplication> findByCustomerIdAndStatus(Long customerId,LoanStatus status,Pageable pageable);@Lock(LockModeType.PESSIMISTIC_WRITE)@Query("select l from LoanApplication l join fetch l.customer where l.id=:id")Optional<LoanApplication> findByIdForUpdate(@Param("id")Long id);long countByStatus(LoanStatus status);}
+

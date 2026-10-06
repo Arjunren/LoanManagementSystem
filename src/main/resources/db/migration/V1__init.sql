@@ -1,0 +1,9 @@
+CREATE TABLE users(id BIGSERIAL PRIMARY KEY,email VARCHAR(255) NOT NULL UNIQUE,password_hash VARCHAR(255) NOT NULL,name VARCHAR(120) NOT NULL,role VARCHAR(20) NOT NULL CHECK(role IN('ADMIN','LOAN_OFFICER','CUSTOMER')),active BOOLEAN NOT NULL DEFAULT TRUE,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+CREATE TABLE auth_tokens(id BIGSERIAL PRIMARY KEY,token_hash VARCHAR(64) NOT NULL UNIQUE,user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,expires_at TIMESTAMPTZ NOT NULL,revoked_at TIMESTAMPTZ,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+CREATE INDEX auth_tokens_user_idx ON auth_tokens(user_id);
+CREATE TABLE loan_applications(id BIGSERIAL PRIMARY KEY,customer_id BIGINT NOT NULL REFERENCES users(id),principal NUMERIC(19,2) NOT NULL CHECK(principal>=100),term_months INTEGER NOT NULL CHECK(term_months BETWEEN 1 AND 360),purpose VARCHAR(500) NOT NULL,status VARCHAR(20) NOT NULL CHECK(status IN('PENDING','APPROVED','REJECTED','DISBURSED','PAID')),annual_interest_rate NUMERIC(7,4),total_repayable NUMERIC(19,2),outstanding_balance NUMERIC(19,2),rejection_reason VARCHAR(500),reviewed_by BIGINT REFERENCES users(id),decided_at TIMESTAMPTZ,version BIGINT NOT NULL DEFAULT 0,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),CHECK(outstanding_balance IS NULL OR outstanding_balance>=0));
+CREATE INDEX loans_customer_idx ON loan_applications(customer_id);
+CREATE INDEX loans_status_idx ON loan_applications(status);
+CREATE TABLE repayments(id BIGSERIAL PRIMARY KEY,loan_id BIGINT NOT NULL REFERENCES loan_applications(id),amount NUMERIC(19,2) NOT NULL CHECK(amount>0),reference VARCHAR(50) NOT NULL UNIQUE,recorded_by BIGINT NOT NULL REFERENCES users(id),paid_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+CREATE INDEX repayments_loan_paid_idx ON repayments(loan_id,paid_at DESC);
+
